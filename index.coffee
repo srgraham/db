@@ -6,20 +6,26 @@ module.exports = (config)->
     out = {}
 
     # create a connection pool with a 100 connection limit
-    connection_pool = mysql.createPool
+    connection_pool = mysql.createPool {
+        ...config.options
         connectionLimit: 100
         host: config.host
         user: config.user
         password: config.pass
         database: config.database
+    }
+
 
     # grab a single connection
     out.getConnection = ()->
-        conn = mysql.createConnection
+        conn = mysql.createConnection {
+            ...config.options
             host: config.host
             user: config.user
             password: config.pass
             database: config.database
+        }
+
         return conn
 
     # takes a single connection from the pool
@@ -80,6 +86,21 @@ module.exports = (config)->
                 conn.release()
                 return
             return
+        return
+
+    out.insert = (table_name, row_obj, callback)->
+
+        columns = _.keys row_obj
+
+        query = """
+            INSERT INTO #{table_name} (#{columns.join ','})
+            VALUES(#{_.map columns, ->'?'})
+        """
+
+        binds = _.values row_obj
+
+        out.execute query, binds, callback
+
         return
 
     # creates a safe string version of an IN() query for use in SQL queries

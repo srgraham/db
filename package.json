@@ -1,6 +1,6 @@
 {
   "name": "db",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -10,15 +10,16 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "coffeescript": "^2.0.2",
     "lodash": "^4.17.4",
     "mysql": "^2.13.0"
   },
   "devDependencies": {
-    "coffeelint": "1.13.0",
+    "coffeelint": "^2.0.7",
+    "coffeelint-callback-handle-error": "^1.0.0",
     "coffeelint-forbidden-regex": "0.0.3",
     "coffeelint-no-implicit-returns": "0.0.5",
-    "coffeelint-unreachable-code-after-return": "^0.9.0",
-    "coffeelint-callback-handle-error": "^1.0.0",
-    "coffeelint-no-operation-expression": "0.0.3"
+    "coffeelint-no-operation-expression": "0.0.3",
+    "coffeelint-unreachable-code-after-return": "^0.9.0"
   }
 }

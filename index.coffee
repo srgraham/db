@@ -1,5 +1,6 @@
 mysql = require 'mysql'
 _ = require 'lodash'
+async = require 'async'
 
 module.exports = (config)->
 
@@ -100,6 +101,124 @@ module.exports = (config)->
         binds = _.values row_obj
 
         out.execute query, binds, callback
+
+        return
+
+    out.update = (table_name, id_where_obj, row_obj, callback)->
+
+        columns = _.keys row_obj
+        binds = []
+        sets = _.map row_obj, (val, column)->
+            binds.push val
+            return "#{column} = ?"
+
+        id_wheres = _.map id_where_obj, (val, column)->
+            binds.push val
+            return "#{column} = ?"
+
+        query = """
+            UPDATE #{table_name}
+            SET #{sets.join(',')}
+            WHERE #{id_wheres.join(',')}
+            LIMIT 1
+        """
+
+        out.execute query, binds, callback
+
+        return
+
+    out.insertOnDuplicateKeyUpdate = (table_name, row_obj, ignored_update_columns, callback)->
+
+        columns = _.keys row_obj
+
+        update_columns = _.without columns, ignored_update_columns...
+
+        sets = _.map update_columns, (column)->
+            return "#{column} = ?"
+
+        query = """
+            INSERT INTO #{table_name} (#{columns.join ','})
+            VALUES(#{_.map columns, ->'?'})
+            ON DUPLICATE KEY UPDATE
+            #{sets.join(',')}
+        """
+
+        binds = _.values row_obj
+
+        _.each update_columns, (column)->
+            binds.push row_obj[column]
+
+        if update_columns.length is 0
+            err = new Error """
+                no columns to update when passed to insertOnDuplicateKeyUpdate().
+                Maybe theyre all ignored?
+                Query:
+                #{query}
+
+                Binds:
+                [#{binds}]
+            """
+            callback err
+            return
+
+        out.execute query, binds, callback
+
+        return
+
+    out.insertOnDuplicateKeyUpdateMulti = (table_name, row_obj_arr, ignore_update_columns, callback)->
+        async.eachLimit row_obj_arr, 1, (row_obj, cb)->
+            out.insertOnDuplicateKeyUpdate table_name, row_obj, ignore_update_columns, cb
+            return
+        , callback
+        return
+
+    out.insertIgnore = (table_name, row_obj, callback)->
+
+        columns = _.keys row_obj
+
+        query = """
+            INSERT IGNORE INTO #{table_name} (#{columns.join ','})
+            VALUES(#{_.map columns, ->'?'})
+        """
+
+        binds = _.values row_obj
+
+        out.execute query, binds, callback
+
+        return
+
+
+
+    out.insertIgnoreMulti = (table_name, row_objs, callback)->
+
+
+        insertChunk = (row_objs_chunk, cb)->
+
+            if row_objs_chunk.length is 0
+                cb null, []
+                return
+
+            columns = _.keys row_objs_chunk[0]
+
+            placeholder_row = '(' + _.map(columns, ->'?').join(',') + ')'
+            placeholder_all = _.map(row_objs_chunk, -> placeholder_row).join ','
+
+            query = """
+                INSERT IGNORE INTO #{table_name} (#{columns.join ','})
+                VALUES
+                  #{placeholder_all}
+            """
+
+            binds = _.flatten _.map row_objs_chunk, (row_obj)->
+              return _.values row_obj
+
+            out.execute query, binds, cb
+
+            return
+
+        row_chunks = _.chunk row_objs, 1000
+
+        async.eachLimit row_chunks, 1, insertChunk, callback
 
         return
 

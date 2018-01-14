@@ -230,6 +230,16 @@ module.exports = (config)->
             return '?'
         return placeholders.join(',')
 
+    # creates a safe string version of an IN() query for use in SQL queries
+    # results should be later used like this "... WHERE id IN(#{in_query)"
+    out.createLikeIn = (column_name, in_list, joiner='OR')->
+        if in_list.length is 0
+            return "0"
+
+        placeholders = _.map in_list, ->
+            return "#{column_name} LIKE ?"
+        return "( #{placeholders.join " #{joiner} "} )"
+
     return out
 
 

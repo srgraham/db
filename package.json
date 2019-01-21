@@ -13,7 +13,7 @@
     "async": "^2.6.0",
     "coffeescript": "^2.0.2",
     "lodash": "^4.17.4",
-    "mysql": "^2.13.0"
+    "mysql": "^2.16.0"
   },
   "devDependencies": {
     "coffeelint": "^2.0.7",

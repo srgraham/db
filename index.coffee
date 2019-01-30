@@ -9,7 +9,7 @@ module.exports = (config)->
     # create a connection pool with a 100 connection limit
     connection_pool = mysql.createPool {
         ...config.options
-        connectionLimit: 100
+        connectionLimit: config.connectionLimit ? 100
         host: config.host
         user: config.user
         password: config.pass
